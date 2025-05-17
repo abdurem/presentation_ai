@@ -1,7 +1,6 @@
 import { LangChainAdapter } from "ai";
 import { NextResponse } from "next/server";
-import { auth } from "@/server/auth";
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { StringOutputParser } from "@langchain/core/output_parsers";
@@ -166,19 +165,15 @@ For each outline point:
 Now create a complete XML presentation with {TOTAL_SLIDES} slides that significantly expands on the outline.
 `;
 
-const model = new ChatOpenAI({
-  modelName: "gpt-4o-mini",
+const model = new ChatGoogleGenerativeAI({
+  model: "gemma-3-27b-it",
   temperature: 0.7,
   streaming: true,
 });
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // Authentication removed: anyone can access
     const { title, outline, language, tone } =
       (await req.json()) as SlidesRequest;
 

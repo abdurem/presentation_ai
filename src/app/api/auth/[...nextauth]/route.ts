@@ -1,2 +1,3 @@
-import { handlers } from "@/server/auth";
-export const { GET, POST } = handlers;
+// Authentication is disabled. This API route is removed.
+export const GET = undefined;
+export const POST = undefined;

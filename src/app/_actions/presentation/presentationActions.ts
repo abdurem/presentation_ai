@@ -1,7 +1,6 @@
 "use server";
 
 import { type PlateSlide } from "@/components/presentation/utils/parser";
-import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { type InputJsonValue } from "@prisma/client/runtime/library";
 
@@ -16,19 +15,13 @@ export async function createPresentation(
   presentationStyle?: string,
   language?: string
 ) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-  const userId = session.user.id;
-
+  // No authentication, no userId
   try {
     const presentation = await db.baseDocument.create({
       data: {
         type: "PRESENTATION",
         documentType: "presentation",
         title: title ?? "Untitled Presentation",
-        userId,
         presentation: {
           create: {
             content: content as unknown as InputJsonValue,
@@ -89,11 +82,7 @@ export async function updatePresentation({
   presentationStyle?: string;
   language?: string;
 }) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     // Extract values from content if provided there
     const effectiveTheme = theme;
@@ -137,11 +126,7 @@ export async function updatePresentation({
 }
 
 export async function updatePresentationTitle(id: string, title: string) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     const presentation = await db.baseDocument.update({
       where: { id },
@@ -170,11 +155,7 @@ export async function deletePresentation(id: string) {
 }
 
 export async function deletePresentations(ids: string[]) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     // Delete the base documents using deleteMany (this will cascade delete the presentations)
     const result = await db.baseDocument.deleteMany({
@@ -182,7 +163,7 @@ export async function deletePresentations(ids: string[]) {
         id: {
           in: ids,
         },
-        userId: session.user.id, // Ensure only user's own presentations can be deleted
+        // userId: session.user.id, // Removed user check
       },
     });
 
@@ -199,7 +180,6 @@ export async function deletePresentations(ids: string[]) {
         partialSuccess: deletedCount > 0,
       };
     }
-
     return {
       success: true,
       message:
@@ -218,11 +198,7 @@ export async function deletePresentations(ids: string[]) {
 
 // Get the presentation with the presentation content
 export async function getPresentation(id: string) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     const presentation = await db.baseDocument.findUnique({
       where: { id },
@@ -245,11 +221,7 @@ export async function getPresentation(id: string) {
 }
 
 export async function getPresentationContent(id: string) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     const presentation = await db.baseDocument.findUnique({
       where: { id },
@@ -272,14 +244,7 @@ export async function getPresentationContent(id: string) {
       };
     }
 
-    // Check if the user has access to this presentation
-    if (presentation.userId !== session.user.id && !presentation.isPublic) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      };
-    }
-
+    // No user access check
     return {
       success: true,
       presentation: presentation.presentation,
@@ -294,11 +259,7 @@ export async function getPresentationContent(id: string) {
 }
 
 export async function updatePresentationTheme(id: string, theme: string) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     const presentation = await db.presentation.update({
       where: { id },
@@ -320,11 +281,7 @@ export async function updatePresentationTheme(id: string, theme: string) {
 }
 
 export async function duplicatePresentation(id: string, newTitle?: string) {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-
+  // No authentication
   try {
     // Get the original presentation
     const original = await db.baseDocument.findUnique({
@@ -347,7 +304,6 @@ export async function duplicatePresentation(id: string, newTitle?: string) {
         type: "PRESENTATION",
         documentType: "presentation",
         title: newTitle ?? `${original.title} (Copy)`,
-        userId: session.user.id,
         isPublic: false,
         presentation: {
           create: {
